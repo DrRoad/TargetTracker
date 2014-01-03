@@ -7,6 +7,21 @@ library(ggplot2) #needed for plotting
 library(reshape2)
 
 ################
+# If you wish to understand this code, it might be best to start
+#' with the main loop where one replication of the catcher chasing the tracker
+#' happens. Quite a number of the accompanying functions are called by the main loop.
+#' 
+#----------Initialization Functions ----#
+
+#area_df (a global data frame) gets defined here
+resetIteration <- function(tEndSim){
+  # df is a data frame with lots of 0s
+  targetX <- rep(0, tEndSim); targetY <- rep(0, tEndSim);
+  catcherX <- rep(0, tEndSim); catcherY <- rep(0, tEndSim);
+  df <- data.frame(time=1:tEndSim, targetX, targetY, catcherX, catcherY)  
+  return(df)
+}
+
 
 outOfBoundsX <- function(newx){
   if(newx <0) return (TRUE)
@@ -20,7 +35,17 @@ outOfBoundsY <- function(newy){
   return (FALSE)
 }
 
+#' @description Function returns a TRUE whenever an entity
+#' is at an 'intersection' FALSE otherwise.
+#' At an intersection, the entity has the option to change directions
 is_entity_at_intersection <- function(xt, yt){
+  if(!(xt %% blockLength) && !(yt %% blockLength)) return(TRUE)  
+  return(FALSE)
+}
+
+
+
+old_is_entity_at_intersection <- function(xt, yt){
   if(!(xt %% blockLength)) return(TRUE)
   if(!(yt %% blockLength)) return(TRUE)  
   return(FALSE)
@@ -59,6 +84,7 @@ getNextXYForEntity  <- function(tsim, entity, xe, ye, direction) {
   } #else just continue
   
   if(debug) print(paste("getNext", entity, xe, ye, direction)) #for debugging
+  coords[[entity]] <- c(xe, ye, direction)
   
   return(c(xe, ye, direction))
 }
@@ -121,6 +147,7 @@ catcher <- 2  #just an index to refer to the catcher
 
 direction <- c(0,0) #dir[1] refers to the targets direction. 
 #' dir[2] refers to catcher's direction
+#' 
 colx <- c(0,0); coly <- c(0,0) # initialize with zeros
 colx[target] <- 2 # x-coord of target is stored in this column
 coly[target] <- 3
@@ -139,7 +166,7 @@ debug_print <- 1
 #####
 
 #time parameters
-tEndSim <- 50
+tEndSim <- 1000
 rate <- c(5,2) #target, catcher
 #rate <- c(1,1) #target, catcher
 #the above means that the target moves at some speed. once every t beats
@@ -147,38 +174,49 @@ rate <- c(5,2) #target, catcher
 catcherDelay <- 20 #number of beats after which catcher starts search
 
 # Initialization for this run
+coords <- list(c(1,2,3),c(4,5,6))
 x <- c(0,0); y <- c(0,0) # initialize with placeholders
 x[target] <- 20 #starting point for target
 y[target] <- 20 #starting point for target
 x[catcher] <- 10 #starting point for catcher
 y[catcher] <- 10 #starting point for catcher
 
-# df is a data frame with lots of 0s
-targetX <- rep(0, tEndSim); targetY <- rep(0, tEndSim);
-catcherX <- rep(0, tEndSim); catcherY <- rep(0, tEndSim);
-df <- data.frame(time=1:tEndSim, targetX, targetY, catcherX, catcherY)
-
+df <- resetIteration(tEndSim)
 
 #set an initial direction for both Catcher and Target
-direction[target] <- getDirection(x[target], y[target], 0)
+direction[target]  <- getDirection(x[target],  y[target], 0)
 direction[catcher] <- getDirection(x[catcher], y[catcher], 0)
+
+
+updateCoords <- function(entity, xyd) {
+  x[entity] <- xyd[1]; y[entity] <- xyd[2]
+  direction[entity]     <- xyd[3]
+  coords[[entity]] <- c(x[entity], y[entity], direction[entity])
+  return(coords)
+}
+
+
 
 #one replication of the catcher chasing target
 for(tsim in 1:tEndSim) {
   for (entity in target:catcher)  {
     if(!tsim %% 100) print(tsim) #progress report
     xyd <- getNextXYForEntity(tsim, entity, x[entity], y[entity], direction[entity]) 
+
+    coords <- updateCoords(entity, xyd)
     x[entity] <- xyd[1]; y[entity] <- xyd[2]; 
+    direction[entity]     <- xyd[3]
+
     df[tsim,colx[entity]] <- xyd[1] #store the x coord
     df[tsim,coly[entity]] <- xyd[2] #store the y coord
-    direction[entity]     <- xyd[3]
+    
     if(debug_print)
-      print(paste(tsim,":", x[entity],y[entity],visualDir[direction[entity]]))
+      print(paste(tsim,"-", entity, ":", x[entity],y[entity],visualDir[direction[entity]]))
   }
   
   if(catcher_found_target(tsim, df)) {
-    print(tsim)
-    break
+    print(paste("Caught up at:", tsim))
+    break #move on to next replication
   }
 }
 
