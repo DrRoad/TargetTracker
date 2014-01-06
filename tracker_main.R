@@ -16,12 +16,12 @@ library(reshape2)
 #----------Initialization Functions ----#
 
 #area_df (a global data frame) gets defined here
-resetIteration <- function(tEndSim){
+reset_coord_data_frame <- function(tEndSim){
   # df is a data frame with lots of 0s
   targetX <- rep(0, tEndSim); targetY <- rep(0, tEndSim);
   catcherX <- rep(0, tEndSim); catcherY <- rep(0, tEndSim);
-  df <- data.frame(time=1:tEndSim, targetX, targetY, catcherX, catcherY)  
-  return(df)
+  coord_df <- data.frame(time=1:tEndSim, targetX, targetY, catcherX, catcherY)  
+  return(coord_df)
 }
 
 
@@ -97,14 +97,12 @@ getNextXYForEntity  <- function(tsim, entity, coords) {
 
 # This function checks for the termination condition.
 #' @return TRUE if catcher has caught up with target
-catcher_found_target <- function(tsim, df) {
-  
+catcher_found_target <- function(tsim, coords) {  
   #have to be in the same (x,y) spot at the same time.
-  if((df$targetX[tsim] == df$catcherX[tsim]) && 
-       (df$targetY[tsim] == df$catcherY[tsim])) return(TRUE)
+  if( (coords[[catcher]][1] == coords[[target]][1]) &&
+        (coords[[catcher]][2] == coords[[target]][2])) return(TRUE)
   return(FALSE)
 }
-
 
 ### end of functions
 
@@ -113,55 +111,57 @@ catcher_found_target <- function(tsim, df) {
 source("controls.R")
 source("trackerPlots.R")
 
-df <- resetIteration(tEndSim)
-
-#set an initial direction for both Catcher and Target
-direction[target]  <- getDirection(x[target],  y[target], 0)
-direction[catcher] <- getDirection(x[catcher], y[catcher], 0)
-
-#initialize coords for catcher and Target
-coords <- list(c(x[target],y[target],direction[[target]]),c(x[catcher],y[catcher],direction[[catcher]]))
-if(debug_print) str(coords)
-
-
-chase <- function() {
-
-  return(df)
+initialize_replication <- function(){
+  #set an initial direction for both Catcher and Target
+  direction[target]  <- getDirection(x[target],  y[target], 0)
+  direction[catcher] <- getDirection(x[catcher], y[catcher], 0)
+  
+  #initialize coords for catcher and Target
+  coords <- list(c(x[target],y[target],direction[[target]]),c(x[catcher],y[catcher],direction[[catcher]]))
+  if(debug_print) str(coords)  
+  return(coords)
 }
 
-#one replication of the catcher chasing target
-if(debug_print) print("start replications")
-for(tsim in 1:tEndSim) {
-  if(debug_print) if(!tsim %% 100) print(tsim) #progress report
-  for (entity in target:catcher)  {
+chase <- function(coords) { 
+  #set the dataframe of coords to Zero
+  coord_df <- reset_coord_data_frame(tEndSim) 
+  
+  #one replication of the catcher chasing target
+  if(debug_print) print("start replications")
+  for(tsim in 1:tEndSim) {
+    if(debug_print) if(!tsim %% 100) print(tsim) #progress report
+    for (entity in target:catcher)  {
+      
+      #for each beat of tsim, move the entity forward in its direction
+      coords <- getNextXYForEntity(tsim, entity, coords) 
+      
+      #store it in a data frame to help plotting
+      coord_df[tsim,colx[entity]] <- coords[[entity]][1] #store the x coord
+      coord_df[tsim,coly[entity]] <- coords[[entity]][2] #store the y coord
+      
+      if(debug_print)
+        print(paste(tsim,"-", entity, ":", 
+                    coords[[entity]][1], #x coord of [entity]
+                    coords[[entity]][2], #y coord of [entity]
+                    visualDir[coords[[entity]][3]] #direction of entity
+        ))
+    }
     
-    #for each tsim, move the entity forward in its direction
-    coords <- getNextXYForEntity(tsim, entity, coords) 
-
-    #store it to help plotting
-    df[tsim,colx[entity]] <- coords[[entity]][1] #store the x coord
-    df[tsim,coly[entity]] <- coords[[entity]][2] #store the y coord
-    
-    if(debug_print)
-      print(paste(tsim,"-", entity, ":", 
-                  coords[[entity]][1], #x coord of [entity]
-                  coords[[entity]][2], #y coord of [entity]
-                  visualDir[coords[[entity]][3]] #direction of entity
-                  )
-            )
+    if(catcher_found_target(tsim, coords)) {
+      print(paste("Caught up at:", tsim))
+      break #move on to next replication
+    }
   }
   
-  if(catcher_found_target(tsim, df)) {
-    print(paste("Caught up at:", tsim))
-    break #move on to next replication
-  }
+  return(coord_df)
 }
 
 
-#hist(df$targetY)
-drawXY_Over_Time(df)
 
-head(df, 100)
+coords <- initialize_replication()
+coord_df <- chase(coords)
+drawXY_Over_Time(coord_df)
+head(coord_df, 100)
 
 
 # TTD:
@@ -176,7 +176,7 @@ head(df, 100)
 #  replication Geometry, stx, sty, enx, eny, delay, rate1, rate2, ended
 #   1123, 5,4, 10,10, 20,20, delay=20, rate 4,2, ended
 
-
+#Implementing Turning Schemes - can turn only at ends...
 
 
 # # Make multiple runs (Replication of simulation) and take the average of stats
