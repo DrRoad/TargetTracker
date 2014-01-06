@@ -162,7 +162,7 @@ coords <- initialize_replication()
 coord_df <- chase(coords)
 drawXY_Over_Time(coord_df)
 head(coord_df, 100)
-
+ 
 
 # TTD:
 #   Can get away without even storing df
