@@ -4,11 +4,9 @@
 #' two entities are moving around.
 #' When the two x-coords and the two y-coords are the same, the target has been 'caught'
 #' 
-drawXY_Over_Time <- function(df){  
-  useful_rows <- max(which(df$targetX != 0)) #cut out the bottom part which is all zeros
-  useful_df <- df[1:useful_rows , ]
+drawXY_Over_Time <- function(df, rowsToPlot){  
+  useful_df <- df[1:rowsToPlot , ]
   useful_df <- melt(useful_df, id.vars="time")
-  useful_df$entity <- (useful_df$variable=="targetX")
   
   #introduce two new indicator columns. They are useful to split the graph using facet_grid
   #useful$X is X for targetX or CatcherX rows, 'Y' othw in the melted df
@@ -29,3 +27,8 @@ drawProgress2 <- function(df){
     geom_line(aes(y=catcherX), color="red")+ geom_line(aes(y=catcherY), color="darkgreen")
   p <- p + facet_grid()
 }
+
+
+
+
+

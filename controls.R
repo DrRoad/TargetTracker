@@ -25,8 +25,17 @@ coly[catcher] <- 5
 x <- c(0,0); 
 y <- c(0,0) # initialize with placeholders
 rate <- c(0,0)
+
 #-----------------------
 #The following parameters can be modified
+
+#How many replications of the Catcher Target Chase?
+kNumReplications <- 1
+
+# verbose_flag is an indicator
+# If it is 1, then the details of each replication are stored
+# If it is 0, then only the top-level stats of the Chase are stored
+verbose <- 1
 
 #geography
 numBlocksX  <- 5

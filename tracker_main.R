@@ -15,13 +15,24 @@ library(reshape2)
 #' 
 #----------Initialization Functions ----#
 
-#area_df (a global data frame) gets defined here
 reset_coord_data_frame <- function(tEndSim){
   # df is a data frame with lots of 0s
-  targetX <- rep(0, tEndSim); targetY <- rep(0, tEndSim);
-  catcherX <- rep(0, tEndSim); catcherY <- rep(0, tEndSim);
+  targetX <- rep(NA, tEndSim); targetY <- rep(NA, tEndSim);
+  catcherX <- rep(NA, tEndSim); catcherY <- rep(NA, tEndSim);
   coord_df <- data.frame(time=1:tEndSim, targetX, targetY, catcherX, catcherY)  
   return(coord_df)
+}
+
+#this is an empty dataframe, where all the stats will be stored
+reset_stats_data_frame <- function(kNumReplications){
+  repStatus    <- rep(NA, kNumReplications) 
+  repEndTime   <- rep(NA, kNumReplications)
+  catcherDelay <- rep(NA, kNumReplications)
+  catcherRate  <- rep(NA, kNumReplications)
+  targetRate   <- rep(NA, kNumReplications)
+  stats_df <- data.frame(time=1:kNumReplications, repStatus, 
+                         repEndTime, catcherDelay, targetRate, catcherRate)
+  return(stats_df)
 }
 
 
@@ -42,6 +53,20 @@ outOfBoundsY <- function(newy){
 #' At an intersection, the entity has the option to change directions
 is_entity_at_intersection <- function(xt, yt){
   if(!(xt %% blockLength) && !(yt %% blockLength)) return(TRUE)  
+  return(FALSE)
+}
+
+#there are 4 corners for the grid
+is_entity_at_grid_corner <- function(xt, yt){
+  if(!(xt %% (blockLength*numBlocksX)) && 
+       !(yt %% (blockLength*numBlocksY)) ) return(TRUE)  
+  return(FALSE)
+}
+
+#Checking for being at the grid boundary
+is_entity_at_grid_edge <- function(xt, yt){
+  if(!(xt %% (blockLength*numBlocksX)) ||
+       !(yt %% (blockLength*numBlocksY)) ) return(TRUE)  
   return(FALSE)
 }
 
@@ -123,8 +148,11 @@ initialize_replication <- function(){
 }
 
 chase <- function(coords) { 
+  
+  coord_df <- NULL
   #set the dataframe of coords to Zero
-  coord_df <- reset_coord_data_frame(tEndSim) 
+  if(verbose)
+    coord_df <- reset_coord_data_frame(tEndSim) 
   
   #one replication of the catcher chasing target
   if(debug_print) print("start replications")
@@ -135,9 +163,11 @@ chase <- function(coords) {
       #for each beat of tsim, move the entity forward in its direction
       coords <- getNextXYForEntity(tsim, entity, coords) 
       
+    if(verbose) {
       #store it in a data frame to help plotting
       coord_df[tsim,colx[entity]] <- coords[[entity]][1] #store the x coord
-      coord_df[tsim,coly[entity]] <- coords[[entity]][2] #store the y coord
+      coord_df[tsim,coly[entity]] <- coords[[entity]][2] #store the y coord      
+    }
       
       if(debug_print)
         print(paste(tsim,"-", entity, ":", 
@@ -149,25 +179,62 @@ chase <- function(coords) {
     
     if(catcher_found_target(tsim, coords)) {
       print(paste("Caught up at:", tsim))
+      end_time <- tsim
       break #move on to next replication
     }
   }
   
-  return(coord_df)
+  return(list(end_time, coord_df))
+}
+
+
+# Make multiple runs (Replication of simulation) and take the average of stats
+stats_df <- reset_stats_data_frame(kNumReplications) 
+#  st_row<- vector()
+for(i in 1:kNumReplications) {
+  coords <- initialize_replication()
+  replication <- chase(coords)
+  time_replication_ended <- replication[[1]]
+  coord_df <- replication[[2]]
+  
+  #instrumented metrics for this iterations
+  stats_df[i,2] <- ifelse(time_replication_ended<tEndSim, 1, NULL)
+  stats_df[i,3] <- time_replication_ended
+  stats_df[i,4] <- catcherDelay
+  stats_df[i,5] <- rate[1]
+  stats_df[i,6] <- rate[2]
+}
+
+if(verbose) drawXY_Over_Time(coord_df, time_replication_ended)
+
+summary(stats_df$repEndTime)
+
+library(animation)
+
+if(verbose){
+  saveHTML({
+    par(mar = c(4, 4, 0.5, 0.5)) #setting margings
+    for (i in 1:20) {   
+      xyp <- drawXY_Over_Time(coord_df, i*25)
+      print(xyp)
+      #    ggplot(mtcars[sample(nrow(mtcars), 3), ], aes(x=gear, y=mpg)) + geom_point()
+      ani.pause() #default pause and flush device
+    }
+  }, img.name = "chase2_gg", imgdir = "chase2_dir", 
+  htmlfile = "chaseProgress2.html", autobrowse = FALSE, 
+  title = "Progress of Catcher Tracking a Target", 
+  outdir = getwd(),
+  description = c("Shows a catcher chasing a Target.\n\n", 
+                  "Can Turn at any Intersection")
+  )
+  
 }
 
 
 
-coords <- initialize_replication()
-coord_df <- chase(coords)
-drawXY_Over_Time(coord_df)
-head(coord_df, 100)
- 
-
 # TTD:
-#   Can get away without even storing df
-# 
-# Table Variables:
+
+# Table of Variables:
 #   catcher delay
 #   Rates 1 & 2
 #   starting Coords
@@ -178,33 +245,15 @@ head(coord_df, 100)
 
 #Implementing Turning Schemes - can turn only at ends...
 
-
-# # Make multiple runs (Replication of simulation) and take the average of stats
-# st <- data.frame()
-# st_row<- vector()
-# for(i in 1:kNumReplications) {
-#   area_df <- resetIteration() #initialize the Area (cells)
-#   
-#   seedAreaWithPioneers(numPioneers,seeding.opt)
-#   simstats <- accommodateSettlers(kNumSettlers, settling.option)    #one run
-#   found.home <- simstats[1]
-#   max.look.around <- simstats[2]
-#   #instrumented metrics for this iterations
-#   st_row <- store_iteration_stats(i, kNumSettlers, found.home, max.look.around)
-#   st <- rbind(st,st_row)
-# }
-# 
-# #Render the plot
-# p <- drawArea(area_df)
-# p
-# names(st) <- c("Iter", "FoundHome", "NumSettlers", "Percent")
-# st
-
-
-
 # Future ideas to explore
-# directions more than 4?!
-# more than one catcher
-#get rid of bounds!
+#  * directions more than 4?!
+#  * more than one catcher
+#  * get rid of bounds!
+
+
+
+
+
+
 
 

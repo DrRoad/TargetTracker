@@ -34,14 +34,17 @@ To run this, you need to install all the R files in one directory.
 
 Inside R:
 <code>
+
 setwd("~/<path to your directory>")
+
 source("~/tracker_main.R")
 </code>
 
 ###TODO:
-Add animation
-Add Rules for when the target (or catcher) turns around.
-Collect Stats under different parameters.
+
+* Add animation
+* Add Rules for when the target (or catcher) turns around.
+* Collect Stats under different parameters.
 
 Possible Things to vary:
 
