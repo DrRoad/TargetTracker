@@ -1,0 +1,15 @@
+TargetTracker TODO
+
+Easy to DO
+Check initial Out Of Bounds
+Progress Animation - Same axis
+
+Medium
+
+Implement NO U Turn
+Implement Indiv run grid-animation
+
+
+Long Term:
+Eventually Return home
+View street for 3 blocks along the direction of movement.

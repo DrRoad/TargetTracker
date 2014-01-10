@@ -7,7 +7,6 @@ setwd("~/RStats/Blog_DataDoodler/TargetTracker/")
 
 library(ggplot2) #needed for plotting
 library(reshape2)
-
 ################
 # If you wish to understand this code, it might be best to start
 #' with the main loop where one replication of the catcher chasing the tracker
@@ -133,7 +132,8 @@ catcher_found_target <- function(tsim, coords) {
 
 #All the runtime parameters are set in the file CONTROLS.R
 #This file should be in the same directory as the TargetTracker code.
-source("controls.R")
+source("constants.R") 
+source("simParameters.R") #You can change Parameters here
 source("trackerPlots.R")
 
 initialize_replication <- function(){
@@ -151,7 +151,7 @@ chase <- function(coords) {
   
   coord_df <- NULL
   #set the dataframe of coords to Zero
-  if(verbose)
+  if(verbose_Output)
     coord_df <- reset_coord_data_frame(tEndSim) 
   
   #one replication of the catcher chasing target
@@ -163,7 +163,7 @@ chase <- function(coords) {
       #for each beat of tsim, move the entity forward in its direction
       coords <- getNextXYForEntity(tsim, entity, coords) 
       
-    if(verbose) {
+    if(verbose_Output) {
       #store it in a data frame to help plotting
       coord_df[tsim,colx[entity]] <- coords[[entity]][1] #store the x coord
       coord_df[tsim,coly[entity]] <- coords[[entity]][2] #store the y coord      
@@ -205,13 +205,13 @@ for(i in 1:kNumReplications) {
   stats_df[i,6] <- rate[2]
 }
 
-if(verbose) drawXY_Over_Time(coord_df, time_replication_ended)
+if(plot_Option) 
+  print(drawXY_Over_Time(coord_df, time_replication_ended))
 
 summary(stats_df$repEndTime)
 
 library(animation)
-
-if(verbose){
+if(create_Animation){
   saveHTML({
     par(mar = c(4, 4, 0.5, 0.5)) #setting margings
     for (i in 1:20) {   
