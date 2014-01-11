@@ -5,7 +5,7 @@
 #' When the two x-coords and the two y-coords are the same, the target has been 'caught'
 #' 
 drawXY_Over_Time <- function(df, rowsToPlot){  
-  useful_df <- df[1:rowsToPlot , ]
+  useful_df <- df[1:rowsToPlot , 1:5 ]
   useful_df <- melt(useful_df, id.vars="time")
   
   #introduce two new indicator columns. They are useful to split the graph using facet_grid

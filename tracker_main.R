@@ -65,12 +65,20 @@ is_entity_at_grid_corner <- function(xt, yt){
   return(FALSE)
 }
 
-#Checking for being at the grid boundary
+#Checking for being at the STREET END
 is_entity_at_grid_edge <- function(xt, yt){
-  if(!(xt %% (blockLength*numBlocksX)) ||
-       !(yt %% (blockLength*numBlocksY)) ) return(TRUE)  
+  #xt is on the permimeter & yt at intersection.
+  px <- 0; py <- 0
+  if((xt == (blockLength*numBlocksX)) || (xt == 0)) px <- 1
+  if (px &&   !(yt %% (blockLength)))  return(TRUE)  
+  
+  if((yt == (blockLength*numBlocksY)) || (yt == 0)) py <- 1
+  if (py &&   !(xt %% (blockLength)))  return(TRUE)  
+  
   return(FALSE)
 }
+
+
 
 #' @return {"P", "I", "E", "C"}
 #' P is a regular point on the street 
@@ -93,10 +101,11 @@ getDirection <- function(entity, xe,ye, dir) {
   if(pt_Type == "P") return(dir) #no change needed     
 
   #at a special point.
+  
   if(debug_print) print(paste(pt_Type, entity))
-  if((pt_Type == "C") && (!turns[entity,"Corner"]))       u_turn <- FALSE
-  if((pt_Type == "E") && (!turns[entity,"End"]))          u_turn <- FALSE
-  if((pt_Type == "I") && (!turns[entity,"Intersection"])) u_turn <- FALSE
+  if((pt_Type == "C") && (!uturns[entity,"Corner"]))       u_turn <- FALSE
+  if((pt_Type == "E") && (!uturns[entity,"End"]))          u_turn <- FALSE
+  if((pt_Type == "I") && (!uturns[entity,"Intersection"])) u_turn <- FALSE
   
     #At a special point. Option to change exists.
     while(!done){
@@ -114,11 +123,22 @@ getDirection <- function(entity, xe,ye, dir) {
       
       if(loopCount > 1000) stop(WHILELOOP_ERROR) #new direction not found
     }
-    dir <- consider_dir #found a new direction to move along
+  if(entity==catcher)
+    ifelse(dir == consider_dir, same<<-same+1, new <<- new+1)
+  dir <- consider_dir #found a new direction to move along
   
   if(dir==0)   stop("Error: Direction is zero. Check initial position.")
   return (dir)    
 }
+
+
+
+ #verify that getDirection works
+
+# a<- rep(0,10000)
+#  for(i in 1:10000) a[i] <- getDirection(1, 50,40, 4)
+#  table(a)
+
 
 getNextXYForEntity  <- function(tsim, entity, coords) {
   if( (entity==catcher) && (tsim < catcherDelay))  {
@@ -170,6 +190,7 @@ source("constants.R")
 source("simParameters.R") #You can change Parameters here
 source("trackerPlots.R")
 
+
 initialize_replication <- function(){  
   #Some error checking
   for (entity in target:catcher)  {
@@ -189,8 +210,8 @@ initialize_replication <- function(){
 
 chase <- function(coords) { 
   
-  coord_df <- tEndSim
-  end_time <- 0 #If 0 is returned, unable to catch
+  coord_df <- NULL
+  end_time <- tEndSim # If 0 is returned, unable to catch
   #set the dataframe of coords to Zero
   if(verbose_Output)
     coord_df <- reset_coord_data_frame(tEndSim) 
@@ -208,6 +229,7 @@ chase <- function(coords) {
       #store it in a data frame to help plotting
       coord_df[tsim,colx[entity]] <- coords[[entity]][1] #store the x coord
       coord_df[tsim,coly[entity]] <- coords[[entity]][2] #store the y coord      
+      coord_df[tsim,cold[entity]] <- visualDir[coords[[entity]][3]] #store the dir      
     }
       
       if(debug_print)
@@ -234,12 +256,15 @@ stats_df <- reset_stats_data_frame(kNumReplications)
 #  st_row<- vector()
 for(i in 1:kNumReplications) {
   coords <- initialize_replication()
+  
   replication <- chase(coords)
+  
   time_replication_ended <- replication[[1]]
   coord_df <- replication[[2]]
-  
+
+  if(time_replication_ended==tEndSim) print("Unable to Catch")
   #instrumented metrics for this iterations
-  stats_df[i,2] <- ifelse(time_replication_ended<tEndSim, 1, NULL)
+  stats_df[i,2] <- ifelse(time_replication_ended<tEndSim, 1, 0)
   stats_df[i,3] <- time_replication_ended
   stats_df[i,4] <- catcherDelay
   stats_df[i,5] <- rate[1]

@@ -9,9 +9,11 @@ kNumReplications <- 1
 # verbose_flag is an indicator
 # If it is 1, then the details of each replication are stored
 # If it is 0, then only the top-level stats of the Chase are stored
-verbose <- 1
+verbose_Output <- 1
 debug <- 0 #1 if debug mode is on
 debug_print <- FALSE #Will spit out values if TRUE
+plot_Option <- TRUE
+create_Animation <- FALSE
 #####
 
 # Geography of the "Grid Network"
@@ -35,7 +37,7 @@ rate[catcher] <- 1
 
 #In the version of the Problem we are simulating, the Catcher Doesn't
 # start until a certain has passed since the Target Started.
-catcherDelay <- 100 #number of beats after which catcher starts search
+catcherDelay <- 50 #number of beats after which catcher starts search
 
 #Where are the starting positions of the Starter? The Target?
 #The two could be the same (x,y) Location, but they don't have to be.
@@ -53,41 +55,17 @@ y[catcher] <- 10 #starting point for catcher
 # We define an (interection, end, and Corner)
 
 #Definition:
-#  Intersection - where two streets meet
-#  End - Where one of the streets has a deadend.
-#  Corner - One of the 4 corners of the Area
+#  "Intersection" - where two streets meet
+#  "End" - Where one of the streets has a deadend.
+#  "Corner" - One of the 4 corners of the Area
 # U-TURN - Where the entity makes a 180 deg turn
-Uturn[1] <- c()
 
-turns <- 
+#By default, U-TURNS are allowed at all special points.
+#Set anything to be FALSE to stop that.
+# for example turns[target, "End"] <- FALSE
+uturns[target, "Intersection"] <- FALSE
+uturns[target, "End"] <- FALSE
+uturns[target, "Corner"] <- FALSE
 
-turns[entity, point]
   
-  
-### CONSTANTS --------------
-# You wouldn't change these typically
-### CONSTANTS --------------
-
-orientationX <- c(-1,0,1,0)
-orientationY <- c(0,1,0,-1)
-
-#this is just used for visual debugging
-visualDir <- c("Left", "Up", "Right", "Down")
-
-#####
-#' Set up the starting parameters here
-target <- 1 #just an index to refer to the entity
-catcher <- 2  #just an index to refer to the catcher
-
-direction <- c(0,0) #dir[1] refers to the targets direction. 
-#' dir[2] refers to catcher's direction
-#' 
-colx <- c(0,0); coly <- c(0,0) # initialize with zeros
-colx[target] <- 2 # x-coord of target is stored in this column
-coly[target] <- 3
-colx[catcher] <- 4
-coly[catcher] <- 5
-x <- c(0,0); 
-y <- c(0,0) # initialize with placeholders
-rate <- c(0,0)
 
