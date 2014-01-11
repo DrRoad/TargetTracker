@@ -18,7 +18,10 @@ reset_coord_data_frame <- function(tEndSim){
   # df is a data frame with lots of 0s
   targetX <- rep(NA, tEndSim); targetY <- rep(NA, tEndSim);
   catcherX <- rep(NA, tEndSim); catcherY <- rep(NA, tEndSim);
-  coord_df <- data.frame(time=1:tEndSim, targetX, targetY, catcherX, catcherY)  
+  targetDir <- rep(NA, tEndSim); catcherDir <- rep(NA, tEndSim);
+  coord_df <- data.frame(time=1:tEndSim, targetX, 
+                         targetY, catcherX, catcherY,
+                         targetDir, catcherDir)  
   return(coord_df)
 }
 
@@ -69,21 +72,49 @@ is_entity_at_grid_edge <- function(xt, yt){
   return(FALSE)
 }
 
-getDirection <- function(xe,ye,dir) {
+#' @return {"P", "I", "E", "C"}
+#' P is a regular point on the street 
+#' I is an intersection, E is a street End
+#' C is the area CORNER
+get_type_of_point <- function(xe, ye){
+  if(is_entity_at_grid_corner(xe,ye)) return("C")
+  if(is_entity_at_grid_edge(xe,ye)) return("E")
+  if(is_entity_at_intersection(xe,ye)) return("I")
+  return("P")    
+}
+
+
+getDirection <- function(entity, xe,ye, dir) {
   done=FALSE
-  if(is_entity_at_intersection(xe,ye)){
-    #get a new direction. Option to change exists.
-    if(debug_print) print("at intersection")
+  u_turn <- TRUE #by default U-turns are allowed
+  loopCount <- 0
+  
+  pt_Type <- get_type_of_point(xe,ye)
+  if(pt_Type == "P") return(dir) #no change needed     
+
+  #at a special point.
+  if(debug_print) print(paste(pt_Type, entity))
+  if((pt_Type == "C") && (!turns[entity,"Corner"]))       u_turn <- FALSE
+  if((pt_Type == "E") && (!turns[entity,"End"]))          u_turn <- FALSE
+  if((pt_Type == "I") && (!turns[entity,"Intersection"])) u_turn <- FALSE
+  
+    #At a special point. Option to change exists.
     while(!done){
+      loopCount <- loopCount + 1
+      #in this while loop, we keep trying until we get a new direction that works.
       done = TRUE
       consider_dir <- sample(4,1)
+      
+      #check if NO U-Turns allowed. Can't use the reverse of current dir
+      if(!u_turn && (consider_dir == reverse[dir])) done=FALSE
       newx <- xe + orientationX[consider_dir]      
       newy <- ye + orientationY[consider_dir]      
       #Check if new direction is a legal direction
       if(outOfBoundsX(newx) || (outOfBoundsY(newy))) done=FALSE       
+      
+      if(loopCount > 1000) stop(WHILELOOP_ERROR) #new direction not found
     }
-    dir <- consider_dir #found a new direction to move
-  }
+    dir <- consider_dir #found a new direction to move along
   
   if(dir==0)   stop("Error: Direction is zero. Check initial position.")
   return (dir)    
@@ -105,7 +136,7 @@ getNextXYForEntity  <- function(tsim, entity, coords) {
     ye <- ye + orientationY[direction]    
     
     #get new direction (if at intersection)
-    direction <- getDirection(xe, ye, direction)
+    direction <- getDirection(entity, xe, ye, direction)
     
     #update coordinates and dir for entity
     coords[[entity]] <- c(xe, ye, direction)    
@@ -122,6 +153,9 @@ getNextXYForEntity  <- function(tsim, entity, coords) {
 # This function checks for the termination condition.
 #' @return TRUE if catcher has caught up with target
 catcher_found_target <- function(tsim, coords) {  
+  
+  if(tsim<catcherDelay) return(FALSE)
+  if(tsim<rate[target] || tsim < rate[catcher]) return(FALSE)
   #have to be in the same (x,y) spot at the same time.
   if( (coords[[catcher]][1] == coords[[target]][1]) &&
         (coords[[catcher]][2] == coords[[target]][2])) return(TRUE)
@@ -136,10 +170,16 @@ source("constants.R")
 source("simParameters.R") #You can change Parameters here
 source("trackerPlots.R")
 
-initialize_replication <- function(){
+initialize_replication <- function(){  
+  #Some error checking
+  for (entity in target:catcher)  {
+    if(outOfBoundsX(x[entity])) stop(OB_ERROR)
+    if(outOfBoundsX(y[entity])) stop(OB_ERROR)    
+  }
+  
   #set an initial direction for both Catcher and Target
-  direction[target]  <- getDirection(x[target],  y[target], 0)
-  direction[catcher] <- getDirection(x[catcher], y[catcher], 0)
+  direction[target]  <- sample(4,1)
+  direction[catcher] <- sample(4,1)
   
   #initialize coords for catcher and Target
   coords <- list(c(x[target],y[target],direction[[target]]),c(x[catcher],y[catcher],direction[[catcher]]))
@@ -149,7 +189,8 @@ initialize_replication <- function(){
 
 chase <- function(coords) { 
   
-  coord_df <- NULL
+  coord_df <- tEndSim
+  end_time <- 0 #If 0 is returned, unable to catch
   #set the dataframe of coords to Zero
   if(verbose_Output)
     coord_df <- reset_coord_data_frame(tEndSim) 
@@ -229,6 +270,9 @@ if(create_Animation){
   )
   
 }
+
+
+coord_df
 
 
 
