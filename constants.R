@@ -8,7 +8,6 @@ orientationY <- c(0,1,0,-1)
 #this is just used for visual debugging
 visualDir <- c("Left", "Up", "Right", "Down")
 
-#####
 #' Set up the starting parameters here
 target <- 1 #just an index to refer to the entity
 catcher <- 2  #just an index to refer to the catcher

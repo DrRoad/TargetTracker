@@ -68,4 +68,21 @@ uturns[target, "End"] <- FALSE
 uturns[target, "Corner"] <- FALSE
 
   
+# TTD:
+
+# Table of Variables:
+#   catcher delay
+#   Rates 1 & 2
+#   starting Coords
+#   Geometry
+# 
+#  replication Geometry, stx, sty, enx, eny, delay, rate1, rate2, ended
+#   1123, 5,4, 10,10, 20,20, delay=20, rate 4,2, time_ended
+
+
+# Future ideas to explore
+#  * directions more than 4?!
+#  * more than one catcher
+#  * get rid of bounds - 
+
 

@@ -1,15 +1,27 @@
 TargetTracker TODO
 
 Easy to DO
-Check initial Out Of Bounds
-Progress Animation - Same axis
+
+Add Multiple .md files
+  One with figures explaining I, E, Corner in a figure.
+
+    DONE   "Progress Animation" - Same axis Lengths so the animation is not jarring
+    DONE Stats df
+    DONE Better Looking Graphs - background, line size et.
+
+Vary Catcher Speed and show time bars...
+  X axis = Catcher Speed (relative)
+  Y axis = Range of time to catch up
 
 Medium
-
-Implement NO U Turn
+      DONE Implement NO U Turn
 Implement Indiv run grid-animation
 
+SHINY: Use animation inside Shiny (Yihui's example gist)
+Open Issues on Github. (Feature etc.)
+Explain using Github pages
 
 Long Term:
-Eventually Return home
+Eventually Return home.
 View street for 3 blocks along the direction of movement.
+  Can show this by a 3-block radius circle.

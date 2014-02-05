@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=9" >
+
+<title>Target Tracker</title>
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 12px;
+   margin: 8px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre {	
+   margin-top: 0;
+   max-width: 95%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+
+</style>
+
+
+
+
+
+</head>
+
+<body>
+<h1>Target Tracker</h1>
+
+<p>This project is an R implementation of the following problem.
+The problem was posed to me by Krishan Alamuru.</p>
+
+<p>He wrote:
+Background: On a recent day, my wife went for a walk in the neighborhood. I needed to find her (she didn&#39;t have her phone with her). I am familiar with the general area she walks but not sure of the exact path and where she is on that path.  The question is: Not knowing exactly where she is and where she is headed - how do I find her?  My only advantage is that I&#39;ll be driving and she is walking.</p>
+
+<p>##General problem
+Imagine a moving target on a network of connected streets. (To begin with we can imagine streets aligned to a rectangular grid). A searching agent travelling at a different speed (say x times that of moving target) needs to find the moving target.</p>
+
+<p>###Things to think about:  </p>
+
+<pre><code>Is there a simple formulation that&#39;ll make it trivial to solve problems like these?
+    I&#39;m guessing not. It may be trivial in some instances but may not be trivial even to find a feasible solution in other instances.
+What are some interesting strategies?
+    If the speed &#39;x&#39; is very large compared to &#39;1&#39; and the total length of the network is not big, guess just random driving itself is not a bad strategy.
+Seems like some layouts (of the streets) lend themselves to better strategies than others.  Any general characterization where we can be sure of having a good strategy?
+Are there layouts where it is possible that the target may never be found in some instances?
+    You might think of a simple loop and &#39;x&#39; being less than &#39;1&#39;.  But even in that case the searching agent can go along the loop in clockwise direction for sufficiently long and the reverse the course for sufficiently long to make sure target can definitely be found.
+    I think the answer is &#39;no&#39; - but I don&#39;t have a quick proof.
+Assuming a complete random path by the moving target - are there strategies to minimize the time to find the target?
+Assuming that a search agent can look along any straightline without having to traverse it - how can a strategy take advantage of this (especially at intersections, looking around in all directions.).
+Can you think of a good way to turn this game into an App based game?
+</code></pre>
+
+<h2>Discrete Event Simulation</h2>
+
+<p>The problem above has been implemented in R, using DES (Discrete Event Simulation) Concepts.</p>
+
+<p>To run this, you need to install all the R files in one directory.</p>
+
+<p>Inside R:
+<code>
+setwd(&quot;~/<path to your directory")
+source("~/tracker_main.R")
+</code></p>
+
+<p>TODO:
+Add animation
+Add Rules for when the target (or catcher) turns around.
+Collect Stats under different parameters.
+Things to vary:
+1.   catcher delay
+2.  Rates 1 &amp; 2
+3.  starting Coords
+4.  Geometry of the road network</p>
+
+</body>
+
+</html>
+
